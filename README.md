@@ -57,9 +57,9 @@ Email notifications are sent after each move to notify the player of their turn 
  - **place_ship**
     - Path: 'game/{urlsafe_game_key}/position'
     - Method: POST
-    - Parameters: urlsafe_game_key, x, y, user_name, ship
+    - Parameters: urlsafe_game_key, x, y, user_name, ship, vertical_orientation
     - Returns: GameForm with success message.
-    - Description: Accepts a (x,y) position for a ship in the setup phase of the game. Raises exceptions if position is invalid, the requested ship is already in place, or if the game already started.
+    - Description: Accepts a (x,y) position and orientation boolean for a ship in the setup phase of the game (the ships may be oriented horizontally or vertically on the board starting at the given x,y coordinate). Raises exceptions if position is invalid, the requested ship is already in place, or if the game already started.
 
  - **make_move**
     - Path: 'game/{urlsafe_game_key}/move'
