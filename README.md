@@ -2,12 +2,10 @@
 Battleship API created as part of the Game API project in the Udacity full-stack nanodegree.
 
 ## Set-Up Instructions:
-1.  Update the value of application in app.yaml to the app ID you have registered
- in the App Engine admin console and would like to use to host your instance of this sample.
-2.  Run the app with the devserver using dev_appserver.py DIR, and ensure it's
- running by visiting the API Explorer - by default https://localhost:8080/_ah/api/explorer.
-3.  (Optional) Generate your client library(ies) with the endpoints tool.
- Deploy your application.
+0. Install the [Google Cloud SDK](https://cloud.google.com/sdk/)
+1. Clone this repo to your computer with `git clone https://github.com/jdiii/battleship-api.git`
+2. `cd` to the newly created directory and run the app with the devserver using the command `dev_appserver.py app.yaml`. Ensure it's
+ running by visiting the API Explorer, which by default runs at https://localhost:8080/_ah/api/explorer.
 
 ## Game Description:
 Battleship is a two-player game where each player tries to shoot and sink all her opponent's ships.
@@ -141,3 +139,6 @@ Email notifications are sent after each move to notify the player of their turn 
     - Detailed representation of a game's full history, with all child Ships and Moves.
  - **StringMessage**
     - General purpose String container.
+
+## Technologies Used
+Built on Google App Engine, Cloud Data Store, Google Protocol RPC in Python
