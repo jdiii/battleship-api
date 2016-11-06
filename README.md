@@ -114,7 +114,7 @@ Email notifications are sent after each move to notify the player of their turn 
  - **Position**
     - Stores x, y coordinate of ships and whether position has been hit. Child of Ship.
 
-##Forms Included:
+## Messages Included:
  - **GameForm**
     - Representation of a Game's state.
  - **PositionForm**
