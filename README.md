@@ -11,9 +11,9 @@ Battleship API created as part of the Game API project in the Udacity full-stack
 Battleship is a two-player game where each player tries to shoot and sink all her opponent's ships.
 
 ## How to play:
-1. Set up two users using the /user endpoint
-2. In the setup phase of the game, each player sends requests to the /game/{urlsafe_game_key}/position endpoint to place all 5 ships in his fleet (Destroyer, Cruiser, Submarine, Battleship, and Aircraft Carrier) on his 10x10 board.
-3. Once all the ships are placed on the board, the game starts. Players take turns shooting at the other player's ships using the /game/{urlsafe_game_key}/move endpoint.
+1. Set up two users using the `/user` endpoint
+2. In the setup phase of the game, each player sends requests to the `/game/{urlsafe_game_key}/position` endpoint to place all 5 ships in his fleet (Destroyer, Cruiser, Submarine, Battleship, and Aircraft Carrier) on his 10x10 board.
+3. Once all the ships are placed on the board, the game starts. Players take turns shooting at the other player's ships using the `/game/{urlsafe_game_key}/move` endpoint.
 4. The first player who sinks all of her opponent's ships wins.
 
 ## Files Included:
