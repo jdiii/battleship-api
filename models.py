@@ -6,14 +6,16 @@ import random
 from datetime import date
 from protorpc import messages
 from google.appengine.ext import ndb
-
-class GameException(Exception):
-    pass
-
+## Constants
 SHIPS = {'Destroyer': 2, 'Cruiser': 3, 'Submarine': 3, 'Battleship': 4, 'Aircraft Carrier': 5}
 BOARD_SIZE = 9
 
-## MODELS ########################
+## Generic exception
+class GameException(Exception):
+    pass
+
+
+## MODELS
 class User(ndb.Model):
     """User profile"""
     name = ndb.StringProperty(required=True)
@@ -25,38 +27,46 @@ class User(ndb.Model):
 
 
 class Move(ndb.Model):
+    ''' x,y coordinate that player wishes to shoot at on opponent's board'''
     player = ndb.KeyProperty(required=True, kind="User")
     x = ndb.IntegerProperty(required=True)
     y = ndb.IntegerProperty(required=True)
 
     @classmethod
     def get_move(cls, game, player, x, y):
+        ''' see if move already exists. returns None if it doesn't'''
         q = cls.query(
             cls.player==player.key,
             cls.x==x,
             cls.y==y,
             ancestor=game.key)
         move = q.get()
-        print move
         return move
 
 
-
-
 class Ship(ndb.Model):
+    ''' one of player's ships. parent of position
+        if all Ship's child Positions are hit, sunk is set to True
+    '''
     player = ndb.KeyProperty(required=True, kind="User")
-    ship = ndb.StringProperty(required=True)
+    ship = ndb.StringProperty(required=True) # name of ship
     sunk = ndb.BooleanProperty(required=True, default=False)
 
+
 class Position(ndb.Model):
+    ''' coordinates of the parent ship. each Ship coordinate gets its own Position
+        Boolean hit is whether or not the player's opponent has shot that part of the ship
+    '''
     x = ndb.IntegerProperty(required=True)
     y = ndb.IntegerProperty(required=True)
     hit = ndb.BooleanProperty(required=True, default=False)
 
 
 class Game(ndb.Model):
-    """Game object"""
-    # statuses: 'setting up', 'p1 move', 'p2 move', 'game over'
+    """
+       Game object.
+       statuses: 'setting up', 'p1 move', 'p2 move', 'game over'
+    """
     status = ndb.StringProperty(required=True, default='Setting Up')
     p1 = ndb.KeyProperty(required=True, kind='User')
     p2 = ndb.KeyProperty(required=True, kind='User')
@@ -73,9 +83,11 @@ class Game(ndb.Model):
     def delete_game(self):
         self.key.delete()
 
+    ## gets all of a player's ships in the game
     def get_ships(self, user_key):
         return Ship.query(ancestor=self.key).filter(Ship.player==user_key).fetch()
 
+    ##  returns which ships are not yet on each player's board during game setup
     def remaining_ships_to_setup(self):
         ships = SHIPS.keys()
         p1_positions = [s.ship for s in self.get_ships(self.p1)]
@@ -83,9 +95,16 @@ class Game(ndb.Model):
         return ([ship for ship in ships if ship not in p1_positions],
                 [ship for ship in ships if ship not in p2_positions])
 
-
     @ndb.transactional(xg=True)
     def add_ship(self, player, ship_name, x, y, vertical=False):
+        '''
+        adds a ship to the board at the given coordinates for the given player
+        or returns a GameException if the move turns out to be invalid
+
+        using the @ndb.transactional decorator because you have to create
+        a ship to start generating positions... but you might want to undo
+        everything if a position turns out to be invalid
+        '''
 
         game = self
 
@@ -140,8 +159,6 @@ class Game(ndb.Model):
 
         ndb.put_multi(coordinates)
 
-
-
     def to_form(self, message):
         """Returns a GameForm representation of the Game"""
         form = GameForm()
@@ -151,16 +168,6 @@ class Game(ndb.Model):
         form.status = self.status
         form.message = message
         return form
-
-    def end_game(self, won=False):
-        """Ends the game - if won is True, the player won. - if won is False,
-        the player lost."""
-        self.status = 'game over'
-        self.put()
-        # Add the game to the score 'board'
-        score = Score(user=self.user, date=date.today(), won=won,
-                      guesses=self.attempts_allowed - self.attempts_remaining)
-        score.put()
 
 
 class GameForm(messages.Message):
@@ -211,27 +218,33 @@ class MultiGamesMessage(messages.Message):
     user = messages.StringField(1)
     games = messages.MessageField(GameForm, 2, repeated=True)
 
+
 class RankLineItem(messages.Message):
     user_name = messages.StringField(1, required=True)
     wins = messages.IntegerField(2, required=True)
 
+
 class GameRankings(messages.Message):
     rankings = messages.MessageField(RankLineItem, 1, repeated=True)
+
 
 class XYMessage(messages.Message):
     x = messages.IntegerField(1)
     y = messages.IntegerField(2)
     hit = messages.BooleanField(3)
 
+
 class ShipMessage(messages.Message):
     player = messages.StringField(1)
     ship = messages.StringField(2)
     positions = messages.MessageField(XYMessage, 3, repeated=True)
 
+
 class MoveMessage(messages.Message):
     player = messages.StringField(1)
     x = messages.IntegerField(2)
     y = messages.IntegerField(3)
+
 
 class FullGameInfo(messages.Message):
     game = messages.MessageField(GameForm, 1)
