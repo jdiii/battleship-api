@@ -1,0 +1,13 @@
+*** What additional properties did you add to your models and why?
+To the Game object, I added game status because the game has a setup phase in addition to turns. I added a p2 field to represent the second player in the game.
+
+Battleship has a more complex structure and rules than the Guess-A-Number example game, which required more complex objects:
+
+The Move object now has x,y coordinates because the game takes place on a coordinate plane.
+
+I added new objects Ship and Position to represent the ships and their respective locations on the board for each player. The Position object did not necessarily have to be its own object (e.g. it could have been represented as a tuple (x,y, hit) in a repeated property on Ship) but using its own object made it somewhat easier to find hits/misses during moves and query for whether a ship was sunk or not, using queries rather than nested for loops.
+
+*** What were some of the trade-offs or struggles you faced when implementing the new game logic?
+The big trade-off was structuring the Game --> Ship --> Position parent/child hierarchy to allow for db transactions over ease of querying with KeyProperty.
+
+Querying with the transaction decorator has several limitations, including only using ancestor filters. Certain queries that would have had multiple filters and made game logic simpler probably would have been easier to implement. However, using transactions and the more difficult logic had a bunch of advantages. It seemed like the use of transactions would use fewer queries and would produce fewer unnecessary entities that would need to be cleaned up later.
