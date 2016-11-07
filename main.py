@@ -3,7 +3,6 @@
 """main.py - This file contains handlers that are called by taskqueue and/or
 cronjobs."""
 import logging
-
 import webapp2
 from google.appengine.api import mail, app_identity
 from api import BattleshipApi
@@ -33,8 +32,6 @@ class SendReminderEmail(webapp2.RequestHandler):
     def get(self):
 
         app_id = app_identity.get_application_id()
-        message = 'It\'s your turn! Make a move!'
-
         open_games = Game.query(Game.status.IN(['p1 move','p2 move'])).fetch()
 
         emails_to_send = []

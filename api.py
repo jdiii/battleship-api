@@ -184,10 +184,10 @@ class BattleshipApi(remote.Service):
             raise endpoints.BadRequestException('You already made that move')
 
         # we have determined player is making a valid move, so switch whose turn it is
-        if game_status == 'p1 move':
-            game_status == 'p2 move'
+        if game.status == 'p1 move':
+            game.status == 'p2 move'
         else:
-            game_status == 'p1 move'
+            game.status == 'p1 move'
         game.put()
 
         # create a Move object
@@ -222,7 +222,7 @@ class BattleshipApi(remote.Service):
                         # send game-over email
                         message = '{} sunk {}! The game is over and {} won!'.format(player.name, s.ship, player.name)
                         self.sendEmail(player, game, message)
-                        self.sendEmail(opponsent, game, message)
+                        self.sendEmail(opponent, game, message)
 
                         # return game over MoveResponse
                         return MoveResponse(hit=True, ship=s.ship, sunk=True, message='Hit! Sunk! Game over! You win!')
