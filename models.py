@@ -20,6 +20,7 @@ class User(ndb.Model):
     """User profile"""
     name = ndb.StringProperty(required=True)
     email = ndb.StringProperty(default=None)
+    created = ndb.DateTimeProperty(auto_add_now=True)
 
     @classmethod
     def by_name(cls, name):
@@ -31,6 +32,7 @@ class Move(ndb.Model):
     player = ndb.KeyProperty(required=True, kind="User")
     x = ndb.IntegerProperty(required=True)
     y = ndb.IntegerProperty(required=True)
+    created = ndb.DateTimeProperty(auto_add_now=True)
 
     @classmethod
     def get_move(cls, game, player, x, y):
@@ -51,6 +53,8 @@ class Ship(ndb.Model):
     player = ndb.KeyProperty(required=True, kind="User")
     ship = ndb.StringProperty(required=True) # name of ship
     sunk = ndb.BooleanProperty(required=True, default=False)
+    created = ndb.DateTimeProperty(auto_add_now=True)
+    modified = ndb.DateTimeProperty(auto_add=True)
 
 
 class Position(ndb.Model):
@@ -60,6 +64,7 @@ class Position(ndb.Model):
     x = ndb.IntegerProperty(required=True)
     y = ndb.IntegerProperty(required=True)
     hit = ndb.BooleanProperty(required=True, default=False)
+    created = ndb.DateTimeProperty(auto_add_now=True)
 
 
 class Game(ndb.Model):
@@ -71,6 +76,8 @@ class Game(ndb.Model):
     p1 = ndb.KeyProperty(required=True, kind='User')
     p2 = ndb.KeyProperty(required=True, kind='User')
     winner = ndb.KeyProperty(kind='User')
+    created = ndb.DateTimeProperty(auto_add_now=True)
+    modified = ndb.DateTimeProperty(auto_add=True)
 
     @classmethod
     def new_game(cls, user1, user2):
