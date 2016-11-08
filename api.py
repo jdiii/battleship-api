@@ -10,6 +10,7 @@ import endpoints
 from protorpc import remote, messages
 from google.appengine.api import memcache
 from google.appengine.api import taskqueue
+from google.appengine.ext import ndb
 
 from models import User, Game, Move, Position, Ship, SHIPS, BOARD_SIZE
 from models import StringMessage, NewGameForm, GameForm, PositionForm
@@ -252,12 +253,17 @@ class BattleshipApi(remote.Service):
                       name='get_user_games',
                       http_method='GET')
     def get_user_games(self, request):
-        ''' returns all games the specified user has played '''
+        ''' returns all games the specified user has in progress '''
         user = User.by_name(request.user_name)
         if not user:
             raise endpoints.NotFoundException('User not found')
 
-        games = Game.query(Game.p1==user.key or Game.p2==user.key).fetch()
+        games = Game.query().filter(
+                    ndb.OR(Game.p1==user.key, Game.p2==user.key)).filter(
+                    Game.status != 'game over').fetch()
+
+        games.sort(key= lambda a: a.created)
+
         response = MultiGamesMessage(
                         games=[game.to_form('') for game in games],
                         user=request.user_name)
@@ -275,11 +281,17 @@ class BattleshipApi(remote.Service):
         game = get_by_urlsafe(request.urlsafe_game_key, Game)
         if not game:
             raise endpoints.NotFoundException('Game not found')
+
+        if game.status == 'game over':
+            raise endpoints.BadRequestException(
+                'You can\'t delete a game that is already over')
+
         try:
             game.delete_game()
             return StringMessage(message='Game with id ' + request.urlsafe_game_key + 'successfully deleted.')
         except:
-            raise endpoints.BadRequestException('An error was found in the request.')
+            raise endpoints.BadRequestException(
+                'An error was found in the request.')
 
 
     @endpoints.method(response_message=GameRankings,
@@ -308,16 +320,13 @@ class BattleshipApi(remote.Service):
                       http_method='GET')
     def get_game_history(self, request):
         ''' returns the usual GameForm, plus all related positions and all moves '''
-
-
-
         game = get_by_urlsafe(request.urlsafe_game_key, Game)
         if not game:
             return endpoints.NotFoundException("Game not found")
         game_key = game.key
         game = game.to_form("")
 
-        ships = Ship.query(ancestor=game_key).fetch()
+        ships = Ship.query(ancestor=game_key).order(-Ship.created).fetch()
         ship_forms = []
         for s in ships:
             position_forms = []
@@ -327,12 +336,13 @@ class BattleshipApi(remote.Service):
             ship_forms.append(ShipMessage(
                                 player=s.player.get().name,
                                 ship=s.ship,
+                                created_date=s.created,
                                 positions=position_forms))
 
-        moves = Move.query(ancestor=game_key).fetch()
+        moves = Move.query(ancestor=game_key).order(-Move.created).fetch()
         move_forms = []
         for m in moves:
-            move_forms.append(MoveMessage(player=m.player.get().name, x=m.x, y=m.y))
+            move_forms.append(MoveMessage(player=m.player.get().name, x=m.x, y=m.y, created_date=m.created))
 
         form = FullGameInfo(game=game, ships=ship_forms, moves=move_forms)
         return form

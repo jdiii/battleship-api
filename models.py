@@ -4,7 +4,7 @@ classes they can include methods (such as 'to_form' and 'new_game')."""
 
 import random
 from datetime import date
-from protorpc import messages
+from protorpc import messages, message_types
 from google.appengine.ext import ndb
 ## Constants
 SHIPS = {'Destroyer': 2, 'Cruiser': 3, 'Submarine': 3, 'Battleship': 4, 'Aircraft Carrier': 5}
@@ -20,7 +20,7 @@ class User(ndb.Model):
     """User profile"""
     name = ndb.StringProperty(required=True)
     email = ndb.StringProperty(default=None)
-    created = ndb.DateTimeProperty(auto_add_now=True)
+    created = ndb.DateTimeProperty(required=True, auto_now_add=True)
 
     @classmethod
     def by_name(cls, name):
@@ -32,7 +32,7 @@ class Move(ndb.Model):
     player = ndb.KeyProperty(required=True, kind="User")
     x = ndb.IntegerProperty(required=True)
     y = ndb.IntegerProperty(required=True)
-    created = ndb.DateTimeProperty(auto_add_now=True)
+    created = ndb.DateTimeProperty(auto_now_add=True)
 
     @classmethod
     def get_move(cls, game, player, x, y):
@@ -53,8 +53,8 @@ class Ship(ndb.Model):
     player = ndb.KeyProperty(required=True, kind="User")
     ship = ndb.StringProperty(required=True) # name of ship
     sunk = ndb.BooleanProperty(required=True, default=False)
-    created = ndb.DateTimeProperty(auto_add_now=True)
-    modified = ndb.DateTimeProperty(auto_add=True)
+    created = ndb.DateTimeProperty(auto_now_add=True)
+    modified = ndb.DateTimeProperty(auto_now=True)
 
 
 class Position(ndb.Model):
@@ -64,7 +64,7 @@ class Position(ndb.Model):
     x = ndb.IntegerProperty(required=True)
     y = ndb.IntegerProperty(required=True)
     hit = ndb.BooleanProperty(required=True, default=False)
-    created = ndb.DateTimeProperty(auto_add_now=True)
+    created = ndb.DateTimeProperty(auto_now_add=True)
 
 
 class Game(ndb.Model):
@@ -76,8 +76,8 @@ class Game(ndb.Model):
     p1 = ndb.KeyProperty(required=True, kind='User')
     p2 = ndb.KeyProperty(required=True, kind='User')
     winner = ndb.KeyProperty(kind='User')
-    created = ndb.DateTimeProperty(auto_add_now=True)
-    modified = ndb.DateTimeProperty(auto_add=True)
+    created = ndb.DateTimeProperty(auto_now_add=True)
+    modified = ndb.DateTimeProperty(auto_now=True)
 
     @classmethod
     def new_game(cls, user1, user2):
@@ -174,6 +174,7 @@ class Game(ndb.Model):
         form.p2 = self.p2.get().name
         form.status = self.status
         form.message = message
+        form.created_date = self.created
         return form
 
 
@@ -184,6 +185,7 @@ class GameForm(messages.Message):
     message = messages.StringField(3, required=True)
     p1 = messages.StringField(4, required=True)
     p2 = messages.StringField(5, required=True)
+    created_date = message_types.DateTimeField(6, required=True)
 
 
 class PositionForm(messages.Message):
@@ -245,12 +247,14 @@ class ShipMessage(messages.Message):
     player = messages.StringField(1)
     ship = messages.StringField(2)
     positions = messages.MessageField(XYMessage, 3, repeated=True)
+    created_date = message_types.DateTimeField(4)
 
 
 class MoveMessage(messages.Message):
     player = messages.StringField(1)
     x = messages.IntegerField(2)
     y = messages.IntegerField(3)
+    created_date = message_types.DateTimeField(4)
 
 
 class FullGameInfo(messages.Message):
