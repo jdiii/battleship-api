@@ -8,7 +8,7 @@ from protorpc import messages, message_types
 from google.appengine.ext import ndb
 ## Constants
 SHIPS = {'Destroyer': 2, 'Cruiser': 3, 'Submarine': 3, 'Battleship': 4, 'Aircraft Carrier': 5}
-BOARD_SIZE = 9
+BOARD_SIZE = 10
 
 ## Generic exception
 class GameException(Exception):
@@ -72,7 +72,7 @@ class Game(ndb.Model):
        Game object.
        statuses: 'setting up', 'p1 move', 'p2 move', 'game over'
     """
-    status = ndb.StringProperty(required=True, default='Setting Up')
+    status = ndb.StringProperty(required=True, default='setting up')
     p1 = ndb.KeyProperty(required=True, kind='User')
     p2 = ndb.KeyProperty(required=True, kind='User')
     winner = ndb.KeyProperty(kind='User')
@@ -115,7 +115,7 @@ class Game(ndb.Model):
 
         game = self
 
-        if y > BOARD_SIZE or x > BOARD_SIZE or y < 0 or x < 0:
+        if y not in range(BOARD_SIZE) or x not in range(BOARD_SIZE):
             raise GameException("Requested position is off the board")
 
         # figure out which player is placing a ship
@@ -147,7 +147,7 @@ class Game(ndb.Model):
         if not vertical:
             while x < x_init+ship_len:
                 print x
-                if x > BOARD_SIZE:
+                if x >= BOARD_SIZE:
                     raise GameException('Not a valid position')
                 if (x, y) in board_coords:
                     raise GameException('Position already occupied')
@@ -156,7 +156,7 @@ class Game(ndb.Model):
                 x += 1
         else:
             while y < y_init+ship_len:
-                if y > BOARD_SIZE:
+                if y >= BOARD_SIZE:
                     raise GameException('Not a valid position')
                 if (x, y) in board_coords:
                     raise GameException('Position already occupied')

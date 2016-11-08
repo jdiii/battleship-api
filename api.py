@@ -177,7 +177,7 @@ class BattleshipApi(remote.Service):
         x = int(request.x)
         y = int(request.y)
 
-        if x > BOARD_SIZE or y > BOARD_SIZE or x < 0 or y < 0:
+        if x not in range(BOARD_SIZE) or y not in range(BOARD_SIZE):
             raise endpoints.BadRequestException('Attempted move is off the board.')
 
         # attempt move
@@ -186,9 +186,9 @@ class BattleshipApi(remote.Service):
 
         # we have determined player is making a valid move, so switch whose turn it is
         if game.status == 'p1 move':
-            game.status == 'p2 move'
+            game.status = 'p2 move'
         else:
-            game.status == 'p1 move'
+            game.status = 'p1 move'
         game.put()
 
         # create a Move object
