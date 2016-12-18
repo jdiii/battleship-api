@@ -10,11 +10,82 @@ Battleship API created as part of the Game API project in the Udacity full-stack
 ## Game Description:
 Battleship is a two-player game where each player tries to shoot and sink all her opponent's ships.
 
-## How to play:
+## How to play, in brief:
 1. Set up two users using the `/user` endpoint
 2. In the setup phase of the game, each player sends requests to the `/game/{urlsafe_game_key}/position` endpoint to place all 5 ships in his fleet (Destroyer, Cruiser, Submarine, Battleship, and Aircraft Carrier) on his 10x10 board.
 3. Once all the ships are placed on the board, the game starts. Players take turns shooting at the other player's ships using the `/game/{urlsafe_game_key}/move` endpoint.
 4. The first player who sinks all of her opponent's ships wins.
+
+## How To Play
+This is the game sequence with example posts provided.
+
+### Set up users
+Battleship is a two player game, so creating two players is required before playing.
+    * POST to the `create_user` method with `user_name="player1"`
+    * POST to the `create_user` method with `user_name="player2"`
+
+### Set up a new game.
+POST to `new_game` endpoint with params `player_1='player_1', player_2='player2'`.
+
+Important: Note the `urlsafe_game_key` returned by this method, as you'll need it for the rest of the game! I will refer to it as {{game_key}} for the rest of this example.
+
+### Set up the board
+Each player needs to place all five ships on their 10x10 "board" using the `place_ship` endpoint. The five ships are Aircraft Carrier (length=5), Battleship (4), Cruiser (3), Destroyer (2), and Submarine (3). Here is an example sequence:
+    * POST to `place_ship` with params:
+        * `urlsafe_game_key={{game key}}`
+        * `user_name='player1'`
+        * `ship='Aircraft Carrier'`
+        * `vertical_orientation=True`
+        * `x=1`
+        * `y=1`
+    * POST to `place_ship` with params:
+        * `urlsafe_game_key={{game key}}`
+        * `user_name='player1'`
+        * `ship='Battleship'`
+        * `vertical_orientation=True`
+        * `x=2`
+        * `y=1`
+    * POST to `place_ship` with params:
+        * `urlsafe_game_key={{game key}}`
+        * `user_name='player1'`
+        * `ship='Cruiser'`
+        * `vertical_orientation=True`
+        * `x=5`
+        * `y=2`
+    * POST to `place_ship` with params:
+        * `urlsafe_game_key={{game key}}`
+        * `user_name='player1'`
+        * `ship='Submarine'`
+        * `vertical_orientation=True`
+        * `x=9`
+        * `y=3`
+    * POST to `place_ship` with params:
+        * `urlsafe_game_key={{game key}}`
+        * `user_name='player1'`
+        * `ship='Destroyer'`
+        * `vertical_orientation=False`
+        * `x=2`
+        * `y=8`
+Repeat those steps with user_name=`player2` and the game will be ready!
+
+Note the (x,y) coordinate provided with be the top-left-most point of the ship and `vertical_orientation` determines whether the ship's length will span the x-axis or y-axis of the board. For example, placing the Destroyer at (2,8) with `vertical_orientation=False` means it will be located at (2,8), (3,8), (4,8).
+
+### Play the game
+The game consists of players taking turns shooting at each other's ships. Whichever player hits all of the other player's positions first wins. Use the `make_move` endpoint to take shots:
+    * Player 1 fires by POSTing to `make_move` with params:
+        * `urlsafe_game_key={{game_key}}`
+        * `user_name=player1`
+        * `x=1`
+        * `x=2`
+      Since player2 placed an Aircraft Carrier there, this request will return a hit message.
+    * Player 2 fires by POSTing to `make_move` with params:
+        * `urlsafe_game_key={{game_key}}`
+        * `user_name=player2`
+        * `x=5`
+        * `y=5`
+      Player1 didn't place a ship there, so the request will return a miss message.
+
+Players alternate hitting the `make_move` endpoint until one player destroys all the other's ships.
 
 ## Files Included:
  - api.py: Contains endpoints and game playing logic.
@@ -25,7 +96,7 @@ Battleship is a two-player game where each player tries to shoot and sink all he
  - utils.py: Helper function for retrieving ndb.Models by urlsafe Key string.
 
 ## Cron jobs
-Email notifications are sent to all players whose turn it is in a game every hour.
+Email notifications are sent to all players whose turn it is in a game every 24 hours.
 
 ## Notifications
 Email notifications are sent after each move to notify the player of their turn (or if the game ends).
@@ -95,50 +166,3 @@ Email notifications are sent after each move to notify the player of their turn 
     - Parameters: urlsafe_game_key
     - Returns: FullGameInfo
     - Description: Returns detailed game history for requested game including all moves, all ships, and all ship positions.
-
-##Models Included:
- - **User**
-    - Stores unique user_name and (optional) email address.
-
- - **Game**
-    - Stores unique game states. Associated with User model via KeyProperty.
-
- - **Move**
- 	- Stores player moves in terms of x and y on the opponent's board. Child of Game.
-
- - **Ship**
-    - Stores ship information, including name, owner, status. Child of Game. A ship will have several child Positions representing where the ship is located and where it's been hit by opponent Moves.
-
- - **Position**
-    - Stores x, y coordinate of ships and whether position has been hit. Child of Ship.
-
-## Messages Included:
- - **GameForm**
-    - Representation of a Game's state.
- - **PositionForm**
-    - Position form for inbound requests to place a ship on the game board.
- - **NewGameForm**
-    - Used to create a new game between player_1 and player_2
- - **MakeMoveForm**
-    - Inbound form for a user to take a shot at an x, y coordinate on the opponent's board.
- - **MoveResponse**
-    - Outbound form to respond to a MakeMoveForm, including whether a ship was missed, hit, or sunk.
- - **MultiGamesMessage**
-    - Used to list all of a user's games.
- - **RankLineItem**
-    - Used to represent a user's win total in a GameRankings message.
- - **GameRankings**
-    - Used to list user rankings.
- - **XYMessage**
-    - Simple representation of a ship's coordinate on the board and whether it's been hit. Used for FullGameInfo.
- - **ShipMessage**
-    - Representation of a Ship and its associated Positions. Used for FullGameInfo.
- - **MoveMessage**
-    - Simple representation of a Move. Used for FullGameInfo.
- - **FullGameInfo**
-    - Detailed representation of a game's full history, with all child Ships and Moves.
- - **StringMessage**
-    - General purpose String container.
-
-## Technologies Used
-Built on Google App Engine, Cloud Data Store, Google Protocol RPC in Python
